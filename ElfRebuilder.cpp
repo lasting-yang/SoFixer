@@ -141,7 +141,7 @@ bool ElfRebuilder::RebuildShdr() {
         shdr.sh_info = 0;
 #ifdef __SO64__
         shdr.sh_addralign = 8;
-        shdr.sh_entsize = 0x18;
+        shdr.sh_entsize = 0x10;
 #else
         shdr.sh_addralign = 4;
         shdr.sh_entsize = 0x8;
@@ -184,7 +184,7 @@ bool ElfRebuilder::RebuildShdr() {
         }
         shstrtab.push_back('\0');
 
-        shdr.sh_type = SHT_REL;
+        shdr.sh_type = si.plt_type == DT_REL ? SHT_REL : SHT_RELA;
         shdr.sh_flags = SHF_ALLOC;
         shdr.sh_addr = (uintptr_t)si.plt_rel - (uintptr_t)base;
         shdr.sh_offset = shdr.sh_addr;
@@ -197,11 +197,14 @@ bool ElfRebuilder::RebuildShdr() {
         shdr.sh_info = 0;
 #ifdef __SO64__
         shdr.sh_addralign = 8;
-        shdr.sh_entsize = 0x18;
 #else
         shdr.sh_addralign = 4;
-        shdr.sh_entsize = 0x8;
 #endif
+        if (si.plt_type == DT_REL) {
+            shdr.sh_entsize = sizeof(Elf_Rel);
+        } else {
+            shdr.sh_entsize = sizeof(Elf_Rela);
+        }
 
         shdrs.push_back(shdr);
     }
